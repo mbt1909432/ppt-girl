@@ -15,7 +15,7 @@ import { Badge } from "@/components/ui/badge";
 import { hasEnvVars } from "@/lib/utils";
 import { useCharacter } from "@/contexts/character-context";
 
-const GITHUB_OPEN_SOURCE_URL = "https://github.com/mbt1909432/acontext-agent-playground-ppt";
+const GITHUB_OPEN_SOURCE_URL = "https://github.com/mbt1909432/ppt-girl";
 
 // Character Grid Component
 function CharacterGrid() {

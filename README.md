@@ -66,8 +66,8 @@ Transform text into professional PPT slides through natural conversation:
 1. **Clone the repository**
 
 ```bash
-git clone https://github.com/mbt1909432/acontext-agent-playground-ppt.git
-cd acontext-agent-playground-ppt
+git clone https://github.com/mbt1909432/ppt-girl.git
+cd ppt-girl
 ```
 
 2. **Install dependencies**
@@ -130,7 +130,7 @@ Visit `http://localhost:3000` to see your application.
 
 ### Deploy to Vercel
 
-[![Deploy with Vercel](https://vercel.com/button)](https://vercel.com/new/clone?repository-url=https%3A%2F%2Fgithub.com%2Fmbt1909432%2Facontext-agent-playground-ppt&ref=main&project-name=acontext-agent-playground-ppt&repository-name=acontext-agent-playground-ppt&demo-title=Acontext%20PPT%20Girl%20Slide%20Generator&demo-description=PPT-style%20slide%20generator%20powered%20by%20Acontext%2C%20with%20chat-driven%20workflow%20and%20semantic%20memory.&demo-url=https%3A%2F%2Facontext-agent-playground-ppt.vercel.app)
+[![Deploy with Vercel](https://vercel.com/button)](https://vercel.com/new/clone?repository-url=https%3A%2F%2Fgithub.com%2Fmbt1909432%2Fppt-girl&ref=main&project-name=ppt-girl&repository-name=ppt-girl&demo-title=Acontext%20PPT%20Girl%20Slide%20Generator&demo-description=PPT-style%20slide%20generator%20powered%20by%20Acontext%2C%20with%20chat-driven%20workflow%20and%20semantic%20memory.&demo-url=https%3A%2F%2Fppt-girl.vercel.app)
 
 1. Click the "Deploy with Vercel" button above
 2. Vercel will guide you through Supabase setup
