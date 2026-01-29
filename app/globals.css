@@ -1,0 +1,367 @@
+@tailwind base;
+@tailwind components;
+@tailwind utilities;
+
+@layer base {
+  :root {
+    --font-sans: "Space Grotesk Variable", system-ui, sans-serif;
+    --font-mono: "JetBrains Mono Variable", "JetBrains Mono", monospace;
+  }
+  
+  body {
+    font-family: var(--font-sans);
+  }
+}
+
+@layer base {
+  :root {
+    /* Light theme tuned to PPT Girl nurse character: white + red theme */
+    --background: 0 0% 99%;
+    --foreground: 0 0% 15%;
+    --card: 0 0% 100%;
+    --card-foreground: 0 0% 15%;
+    --popover: 0 0% 100%;
+    --popover-foreground: 0 0% 15%;
+    --primary: 0 84% 50%;
+    --primary-foreground: 0 0% 100%;
+    --secondary: 0 0% 96%;
+    --secondary-foreground: 0 0% 20%;
+    --muted: 0 0% 97%;
+    --muted-foreground: 0 0% 45%;
+    --accent: 0 84% 95%;
+    --accent-foreground: 0 84% 40%;
+    --destructive: 0 84.2% 60.2%;
+    --destructive-foreground: 0 0% 98%;
+    --border: 0 0% 90%;
+    --input: 0 0% 90%;
+    --ring: 0 84% 50%;
+    --chart-1: 0 84% 50%;
+    --chart-2: 0 60% 60%;
+    --chart-3: 0 40% 70%;
+    --chart-4: 0 20% 80%;
+    --chart-5: 0 10% 85%;
+    --radius: 0.75rem;
+  }
+  .dark {
+    /* Dark theme tuned to PPT Girl nurse character: warm dark with red accents */
+    --background: 0 0% 8%;
+    --foreground: 0 0% 95%;
+    --card: 0 0% 10%;
+    --card-foreground: 0 0% 95%;
+    --popover: 0 0% 10%;
+    --popover-foreground: 0 0% 95%;
+    --primary: 0 84% 60%;
+    --primary-foreground: 0 0% 10%;
+    --secondary: 0 0% 15%;
+    --secondary-foreground: 0 0% 95%;
+    --muted: 0 0% 18%;
+    --muted-foreground: 0 0% 65%;
+    --accent: 0 84% 20%;
+    --accent-foreground: 0 84% 90%;
+    --destructive: 0 62.8% 50%;
+    --destructive-foreground: 0 0% 98%;
+    --border: 0 0% 20%;
+    --input: 0 0% 20%;
+    --ring: 0 84% 60%;
+    --chart-1: 0 84% 60%;
+    --chart-2: 0 70% 65%;
+    --chart-3: 0 60% 70%;
+    --chart-4: 0 50% 75%;
+    --chart-5: 0 40% 80%;
+  }
+}
+
+@layer base {
+  * {
+    @apply border-border;
+  }
+  html {
+    @apply h-full bg-background;
+  }
+  body {
+    @apply h-full bg-background text-foreground;
+  }
+}
+
+@layer utilities {
+  /* Basic fade-in animation for page load */
+  .animate-fade-in {
+    animation: fade-in 0.5s ease-out forwards;
+    opacity: 0;
+  }
+
+  @keyframes fade-in {
+    from {
+      opacity: 0;
+    }
+    to {
+      opacity: 1;
+    }
+  }
+
+  /* Slide up animation */
+  .animate-slide-up {
+    animation: slide-up 0.6s ease-out forwards;
+    opacity: 0;
+  }
+
+  @keyframes slide-up {
+    from {
+      opacity: 0;
+      transform: translateY(20px);
+    }
+    to {
+      opacity: 1;
+      transform: translateY(0);
+    }
+  }
+
+  /* Float animation for background */
+  .animate-float {
+    animation: float 6s ease-in-out infinite;
+  }
+
+  @keyframes float {
+    0%, 100% {
+      transform: translateY(0px);
+    }
+    50% {
+      transform: translateY(-20px);
+    }
+  }
+
+  /* Gradient animation */
+  .animate-gradient {
+    background-size: 200% 200%;
+    animation: gradient 8s ease infinite;
+  }
+
+  @keyframes gradient {
+    0% {
+      background-position: 0% 50%;
+    }
+    50% {
+      background-position: 100% 50%;
+    }
+    100% {
+      background-position: 0% 50%;
+    }
+  }
+
+  /* (character effects removed per request) */
+
+  /* Message bubble slide-in animation */
+  .animate-message-in {
+    animation: message-in 0.4s ease-out forwards;
+    opacity: 0;
+  }
+
+  @keyframes message-in {
+    from {
+      opacity: 0;
+      transform: translateY(10px) scale(0.95);
+    }
+    to {
+      opacity: 1;
+      transform: translateY(0) scale(1);
+    }
+  }
+
+  /* Pulse animation for status indicators */
+  .animate-pulse-slow {
+    animation: pulse-slow 2s cubic-bezier(0.4, 0, 0.6, 1) infinite;
+  }
+
+  @keyframes pulse-slow {
+    0%, 100% {
+      opacity: 1;
+    }
+    50% {
+      opacity: 0.7;
+    }
+  }
+
+  /* Heartbeat animation for medical theme */
+  .animate-heartbeat {
+    animation: heartbeat 1.5s ease-in-out infinite;
+  }
+
+  @keyframes heartbeat {
+    0%, 100% {
+      transform: scale(1);
+    }
+    10%, 30% {
+      transform: scale(1.1);
+    }
+    20%, 40% {
+      transform: scale(1);
+    }
+  }
+
+  /* Slide in from right animation for PPT slides */
+  .animate-slide-in-right {
+    animation: slide-in-right 0.5s ease-out forwards;
+    opacity: 0;
+  }
+
+  @keyframes slide-in-right {
+    from {
+      opacity: 0;
+      transform: translateX(30px) scale(0.95);
+    }
+    to {
+      opacity: 1;
+      transform: translateX(0) scale(1);
+    }
+  }
+
+  /* Hide scrollbar but keep functionality */
+  .scrollbar-hide {
+    -ms-overflow-style: none;  /* IE and Edge */
+    scrollbar-width: none;  /* Firefox */
+  }
+  
+  .scrollbar-hide::-webkit-scrollbar {
+    display: none;  /* Chrome, Safari and Opera */
+  }
+
+  /* Subtle scrollbar: thin, muted, blends with theme (reduces visual prominence) */
+  .scrollbar-subtle {
+    scrollbar-width: thin;
+    scrollbar-color: hsl(var(--muted-foreground) / 0.35) transparent;
+  }
+  .scrollbar-subtle::-webkit-scrollbar {
+    width: 6px;
+  }
+  .scrollbar-subtle::-webkit-scrollbar-track {
+    background: transparent;
+  }
+  .scrollbar-subtle::-webkit-scrollbar-thumb {
+    background: hsl(var(--muted-foreground) / 0.25);
+    border-radius: 999px;
+  }
+  .scrollbar-subtle::-webkit-scrollbar-thumb:hover {
+    background: hsl(var(--muted-foreground) / 0.4);
+  }
+
+  /* Markdown content styles */
+  .markdown-content {
+    @apply max-w-none;
+  }
+
+  .markdown-content h1,
+  .markdown-content h2,
+  .markdown-content h3,
+  .markdown-content h4,
+  .markdown-content h5,
+  .markdown-content h6 {
+    @apply font-semibold mt-4 mb-2;
+  }
+
+  .markdown-content h1 {
+    @apply text-xl;
+  }
+
+  .markdown-content h2 {
+    @apply text-lg;
+  }
+
+  .markdown-content h3 {
+    @apply text-base;
+  }
+
+  .markdown-content p {
+    /* Slight vertical spacing but tighter than default */
+    @apply my-1;
+  }
+
+  .markdown-content ul,
+  .markdown-content ol {
+    /* Keep lists visually grouped but reduce gaps between items */
+    @apply my-1 ml-4 space-y-0.5;
+  }
+
+  .markdown-content ul {
+    @apply list-disc;
+  }
+
+  .markdown-content ol {
+    @apply list-decimal;
+  }
+
+  .markdown-content code {
+    @apply bg-muted px-1.5 py-0.5 rounded text-sm font-mono;
+  }
+
+  .markdown-content pre {
+    @apply bg-muted rounded-lg p-4 overflow-x-auto my-2;
+  }
+
+  .markdown-content pre code {
+    @apply bg-transparent p-0;
+  }
+
+  .markdown-content blockquote {
+    @apply border-l-4 border-primary/30 pl-4 italic my-2 text-muted-foreground;
+  }
+
+  .markdown-content table {
+    @apply min-w-full border-collapse border border-border rounded-lg my-2;
+  }
+
+  .markdown-content th {
+    @apply border border-border px-4 py-2 bg-muted font-semibold text-left;
+  }
+
+  .markdown-content td {
+    @apply border border-border px-4 py-2;
+  }
+
+  .markdown-content img {
+    @apply max-w-full h-auto rounded-lg border border-border my-2;
+  }
+
+  .markdown-content a {
+    @apply text-primary hover:text-primary/80 underline underline-offset-2 transition-colors break-all;
+  }
+
+  /* Code highlighting styles (basic fallback) */
+  .markdown-content pre code {
+    @apply text-foreground;
+  }
+
+  .markdown-content .hljs {
+    @apply bg-muted;
+  }
+
+  /* Chat bubble: compact markdown (tighter spacing, minimal line-break gaps) */
+  .chat-message-body .markdown-content {
+    @apply leading-snug;
+  }
+  .chat-message-body .markdown-content p {
+    @apply my-0.5;
+  }
+  .chat-message-body .markdown-content ul,
+  .chat-message-body .markdown-content ol {
+    @apply my-0.5 ml-3 space-y-0;
+  }
+  .chat-message-body .markdown-content li {
+    @apply py-0;
+  }
+  .chat-message-body .markdown-content h1,
+  .chat-message-body .markdown-content h2,
+  .chat-message-body .markdown-content h3,
+  .chat-message-body .markdown-content h4,
+  .chat-message-body .markdown-content h5,
+  .chat-message-body .markdown-content h6 {
+    @apply mt-1 mb-0.5;
+  }
+  .chat-message-body .markdown-content blockquote {
+    @apply my-0.5;
+  }
+  .chat-message-body .markdown-content pre,
+  .chat-message-body .markdown-content img,
+  .chat-message-body .markdown-content table {
+    @apply my-1;
+  }
+}
