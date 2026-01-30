@@ -13,12 +13,9 @@ export default async function ProtectedPage() {
   }
 
   return (
-    <div className="flex h-full w-full flex-col gap-4 p-2 bg-background lg:flex-row">
+    <div className="flex h-full w-full flex-col gap-4 bg-background lg:flex-row px-4 pb-2 sm:px-6 lg:px-12">
       <div className="flex-1 min-h-0">
-        <ChatbotPanel
-          fullPage
-          assistantName="PPT Girl"
-        />
+        <ChatbotPanel fullPage assistantName="PPT Girl" />
       </div>
     </div>
   );

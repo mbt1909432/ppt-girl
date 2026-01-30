@@ -1075,6 +1075,7 @@ export function ChatbotPanel({
   const [selectedCharacterForNewSession, setSelectedCharacterForNewSession] = useState<CharacterId | null>(null);
   const [sessionCharacterId, setSessionCharacterId] = useState<CharacterId | null>(null); // Locked character for current session
   const [loadingSessionId, setLoadingSessionId] = useState<string | null>(null); // Track which session is being loaded
+  const [hasAttemptedSessionRestore, setHasAttemptedSessionRestore] = useState(false); // Track if session restore has been attempted
   
   // Get effective character: use sessionCharacterId if set, otherwise use global character
   const effectiveCharacter = sessionCharacterId 
@@ -1552,6 +1553,9 @@ export function ChatbotPanel({
       }
     } catch {
       /* ignore */
+    } finally {
+      // Mark that session restore attempt has completed
+      setHasAttemptedSessionRestore(true);
     }
     // eslint-disable-next-line react-hooks/exhaustive-deps -- restore once on mount when URL does not provide session
   }, [fullPage, initialSessionId]);
@@ -1562,6 +1566,24 @@ export function ChatbotPanel({
     handleLoadSessionMessages(initialSessionId);
     // eslint-disable-next-line react-hooks/exhaustive-deps -- run once on mount when initialSessionId is set
   }, [fullPage, initialSessionId]);
+
+  // Auto-show character selection grid when no session is available (full-page only)
+  useEffect(() => {
+    // Only for full-page mode
+    if (!fullPage) return;
+    // Skip if URL provides a session ID (it will be loaded by the effect above)
+    if (initialSessionId) return;
+    // Skip if session restore attempt hasn't completed yet
+    if (!hasAttemptedSessionRestore) return;
+    // Skip if sessions are still loading
+    if (isSessionsLoading) return;
+    // Skip if currently loading a session
+    if (loadingSessionId) return;
+    // Skip if there's already a session or messages
+    if (sessionId || messages.length > 0) return;
+    // Auto-show character selection grid when no session is available
+    setShowCharacterSelectModal(true);
+  }, [fullPage, initialSessionId, hasAttemptedSessionRestore, sessionId, messages.length, isSessionsLoading, loadingSessionId]);
 
   // Fetch available tools for display
   useEffect(() => {
@@ -3091,7 +3113,7 @@ export function ChatbotPanel({
             </div>
             <div
               ref={sessionListRef}
-              className="scrollbar-hide flex-1 space-y-4 overflow-y-auto pr-1"
+              className="flex-1 space-y-4 overflow-y-auto pr-1"
             >
           <Button
             className="w-full justify-start gap-2" 
