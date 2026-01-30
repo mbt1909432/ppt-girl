@@ -23,6 +23,24 @@
 
 <br/>
 
+## 📸 展示
+
+<div align="center">
+  <img src="./public/fonts/promotion/1.png" alt="宣传图 1" width="100%" />
+  <br/><br/>
+  <img src="./public/fonts/promotion/2.png" alt="宣传图 2" width="100%" />
+  <br/><br/>
+  <img src="./public/fonts/promotion/3.png" alt="宣传图 3" width="100%" />
+  <br/><br/>
+  <img src="./public/fonts/promotion/4.png" alt="宣传图 4" width="100%" />
+  <br/><br/>
+  <img src="./public/fonts/promotion/5.png" alt="宣传图 5" width="100%" />
+  <br/><br/>
+  <img src="./public/fonts/promotion/6.png" alt="宣传图 6" width="100%" />
+</div>
+
+<br/>
+
 **Acontext PPT Girl Slide Generator** 是一个由 [Acontext](https://acontext.io) 驱动的智能 PPT 幻灯片生成系统。只需与 **"PPT Girl"** 对话，描述您的演示主题，她就会自动为您创建精美的赛博朋克风格幻灯片图片。
 
 ## 🎯 核心功能
