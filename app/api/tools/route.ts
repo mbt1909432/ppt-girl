@@ -1,5 +1,4 @@
 import { NextResponse } from "next/server";
-import { getBrowserUseToolSchema } from "@/lib/browser-use";
 import { getAcontextDiskToolSchemas } from "@/lib/acontext-disk-tools";
 // Experience search tool has been removed
 import { getTodoToolSchema } from "@/lib/acontext-todo-tool";
@@ -26,7 +25,6 @@ export async function GET() {
   if (toolsEnabled) {
     const schemas = [
       getTodoToolSchema,
-      getBrowserUseToolSchema,
       getImageGenerateToolSchema,
       ...getAcontextDiskToolSchemas(),
     ];

@@ -106,8 +106,6 @@ IMAGE_GEN_API_KEY=your-image-gen-api-key
 IMAGE_GEN_BASE_URL=https://api.openai-next.com
 IMAGE_GEN_DEFAULT_MODEL=gemini-3-pro-image-preview
 
-# Browser Use Cloud (optional)
-BROWSER_USE_API_KEY=your-browser-use-cloud-api-key
 ```
 
 5. **Set up database schema**
@@ -139,9 +137,9 @@ Visit `http://localhost:3000` to see your application.
 
 ## 🔧 Available Tools
 
-- **Browser Use Task** (`browser_use_task`) - Web automation
 - **Acontext Disk Tools** - File system operations (`write_file`, `read_file`, `list_artifacts`, etc.)
 - **Todo Management** (`todo`) - Create and manage todos within chat sessions
+- **Image Generation** (`image_gen`) - Generate slide images
 
 ## 📚 Documentation
 

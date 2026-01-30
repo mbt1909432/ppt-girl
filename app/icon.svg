@@ -1,0 +1,7 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 32 32" fill="none">
+  <rect width="32" height="32" rx="8" fill="#E63946"/>
+  <!-- P and G with tight overlap for one mark (PG = PPT Girl) -->
+  <text x="11" y="22" text-anchor="middle" fill="white" font-family="system-ui, -apple-system, sans-serif" font-size="19" font-weight="800">P</text>
+  <text x="21" y="22" text-anchor="middle" fill="white" font-family="system-ui, -apple-system, sans-serif" font-size="19" font-weight="800">G</text>
+  <rect x="8" y="26" width="16" height="1.5" rx="0.75" fill="white" fill-opacity="0.9"/>
+</svg>

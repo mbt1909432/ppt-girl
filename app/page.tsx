@@ -140,8 +140,9 @@ export default function Home() {
         <nav className="relative border-b bg-card/50 backdrop-blur-sm dark:border-neutral-800 dark:bg-neutral-900/60">
           <div className="mx-auto flex h-16 w-full max-w-[1600px] items-center justify-between px-4 sm:px-6 lg:px-12">
             <div className="flex items-center gap-3">
-              <Link href="/" className="flex items-center gap-2">
-                <span className="text-base sm:text-xl font-semibold tracking-tight">
+              <Link href="/" className="group flex items-center gap-2 transition-transform duration-200 hover:scale-[1.02] active:scale-[0.98]">
+                <img src="/icon.svg" alt="" className="h-7 w-7 flex-shrink-0 transition-transform duration-200 group-hover:scale-110 sm:h-8 sm:w-8" />
+                <span className="text-base font-semibold tracking-tight transition-colors duration-200 group-hover:text-primary sm:text-xl">
                   PPT Girl
                 </span>
               </Link>

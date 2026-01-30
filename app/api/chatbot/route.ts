@@ -10,7 +10,6 @@ import {
   chatCompletion,
   chatCompletionStream,
 } from "@/lib/openai-client";
-import { getBrowserUseToolSchema } from "@/lib/browser-use";
 import { getAcontextClient } from "@/lib/acontext-client";
 import {
   getOrCreateSession,
@@ -34,7 +33,7 @@ import {
 } from "@/lib/chat-errors";
 import type { ChatRequest, ChatResponse } from "@/types/chat";
 
-const REQUEST_TIMEOUT_MS = 300000; // 5 minutes for Browser Use tasks
+const REQUEST_TIMEOUT_MS = 300000; // 5 minutes for long-running requests
 
 /**
  * Default system prompt / persona for the chatbot.
@@ -183,7 +182,6 @@ export async function POST(request: NextRequest) {
       console.log("[Chatbot] API Tokens:", {
         openaiApiKey: maskToken(llmConfig.apiKey),
         acontextApiKey: maskToken(process.env.ACONTEXT_API_KEY),
-        browserUseApiKey: maskToken(process.env.BROWSER_USE_API_KEY),
         imageGenApiKey: maskToken(process.env.IMAGE_GEN_API_KEY),
       });
     } catch (error) {
@@ -441,7 +439,6 @@ Simple tasks (1-2 steps) don't require todo tool, but complex tasks SHOULD use i
     const availableTools = toolsEnabled
       ? [
           getTodoToolSchema,
-          getBrowserUseToolSchema,
           getImageGenerateToolSchema,
           ...getAcontextDiskToolSchemas(),
         ]

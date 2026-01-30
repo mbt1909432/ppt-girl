@@ -4,12 +4,18 @@ import { getAcontextClient } from "@/lib/acontext-client";
 
 type DiskToolContext = ReturnType<typeof DISK_TOOLS.formatContext> | null;
 
+/**
+ * Acontext SDK disk tool names (from @acontext/acontext DISK_TOOLS).
+ * Includes grep_disk and glob_disk for content search and path pattern matching.
+ */
 const DISK_TOOL_NAMES = [
-  "write_file",
-  "read_file",
-  "replace_string",
-  "list_artifacts",
-  "download_file",
+  "write_file_disk",
+  "read_file_disk",
+  "replace_string_disk",
+  "list_disk",
+  "download_file_disk",
+  "grep_disk",
+  "glob_disk",
 ] as const;
 
 /**
@@ -86,7 +92,7 @@ async function getDiskToolContext(diskId?: string): Promise<DiskToolContext> {
 /**
  * Execute one of the filesystem tools by name with the provided arguments.
  * Throws if the tool is unknown or Acontext is not configured.
- * @param name - Tool name (e.g., "write_file", "read_file")
+ * @param name - Tool name (e.g., "write_file_disk", "read_file_disk", "grep_disk", "glob_disk")
  * @param args - Tool arguments
  * @param diskId - Optional disk ID. If not provided, will use first available disk or create one.
  */
@@ -125,8 +131,8 @@ export async function executeAcontextDiskTool(
       errorMessage,
     };
 
-    // For download_file errors, handle file not found gracefully
-    if (name === "download_file") {
+    // For download_file_disk errors, handle file not found gracefully
+    if (name === "download_file_disk") {
       const filename = args.filename as string | undefined;
       const filePath = (args.file_path as string | undefined) || "/";
       
@@ -163,9 +169,9 @@ export async function executeAcontextDiskTool(
       // If it's a database error and we couldn't verify file existence,
       // assume it's a file not found error and return friendly message
       if (errorMessage.toLowerCase().includes("database error")) {
-        const friendlyMessage = `File "${filename || "unknown"}" not found in path "${filePath}". The file may not exist. Try using list_artifacts to see available files.`;
+        const friendlyMessage = `File "${filename || "unknown"}" not found in path "${filePath}". The file may not exist. Try using list_disk to see available files.`;
         
-        console.warn(`[Acontext] Database error for download_file, returning friendly message: ${friendlyMessage}`);
+        console.warn(`[Acontext] Database error for download_file_disk, returning friendly message: ${friendlyMessage}`);
         
         // Return a friendly result instead of throwing an error
         return friendlyMessage;

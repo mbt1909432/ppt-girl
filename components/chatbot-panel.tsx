@@ -6,14 +6,14 @@
 
 import { useState, useRef, useEffect } from "react";
 import Image from "next/image";
-import { flushSync } from "react-dom";
+import { createPortal, flushSync } from "react-dom";
 import { StreamdownMessage } from "@/components/markdown/streamdown-message";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Checkbox } from "@/components/ui/checkbox";
 import { Badge } from "@/components/ui/badge";
-import { MessageCircle, X, Send, Loader2, Plus, ChevronDown, Wrench, Trash2, Paperclip, File, FolderOpen, AlertTriangle, FileText, ExternalLink, Download, Heart, Sparkles, ChevronLeft, ChevronRight, PanelLeftClose, PanelRightClose, PanelLeftOpen, PanelRightOpen, LayoutList, Images, Pencil } from "lucide-react";
+import { MessageCircle, X, Send, Loader2, Plus, ChevronDown, Wrench, Trash2, Paperclip, File, FolderOpen, AlertTriangle, FileText, ExternalLink, Download, Heart, ChevronLeft, ChevronRight, PanelLeftClose, PanelRightClose, PanelLeftOpen, PanelRightOpen, LayoutList, Images, Pencil } from "lucide-react";
 import type { ChatMessage, ChatResponse, ToolInvocation, ChatSession } from "@/types/chat";
 import { useCharacter, type CharacterId } from "@/contexts/character-context";
 import { useBreakpoints } from "@/lib/hooks/use-media-query";
@@ -476,10 +476,12 @@ function getToolLabel(toolName: string): string {
   switch (toolName) {
     case "image_generate":
       return "Generate slide image";
-    case "browser_use_task":
-      return "Browser automation";
+    case "grep_disk":
+      return "Search files (regex)";
+    case "glob_disk":
+      return "Find files (glob)";
     default:
-      if (toolName.startsWith("acontext_disk_")) return "File operation";
+      if (toolName.startsWith("acontext_disk_") || toolName.endsWith("_disk")) return "File operation";
       if (toolName.startsWith("todo_")) return "Task management";
       return `Tool: ${toolName}`;
   }
@@ -498,10 +500,6 @@ function extractKeyParameters(toolName: string, arguments_: Record<string, unkno
     if (typeof arguments_.output_dir === "string") {
       fields.push({ label: "Output", value: <span className="font-mono">{arguments_.output_dir}</span> });
     }
-  } else if (toolName === "browser_use_task") {
-    if (typeof arguments_.task === "string") {
-      fields.push({ label: "Task", value: <ExpandableText text={arguments_.task} max={200} /> });
-    }
   } else if (toolName.startsWith("todo_")) {
     if (typeof arguments_.description === "string") {
       fields.push({ label: "Description", value: <ExpandableText text={arguments_.description} max={200} /> });
@@ -509,15 +507,18 @@ function extractKeyParameters(toolName: string, arguments_: Record<string, unkno
     if (typeof arguments_.title === "string") {
       fields.push({ label: "Title", value: arguments_.title });
     }
-  } else if (toolName.startsWith("acontext_disk_")) {
-    if (typeof arguments_.filePath === "string") {
-      fields.push({ label: "Path", value: <span className="font-mono">{arguments_.filePath}</span> });
+  } else if (toolName.startsWith("acontext_disk_") || toolName.endsWith("_disk")) {
+    if (typeof arguments_.query === "string") {
+      fields.push({ label: "Query", value: <ExpandableText text={arguments_.query} max={200} /> });
     }
-    if (typeof arguments_.path === "string") {
-      fields.push({ label: "Path", value: <span className="font-mono">{arguments_.path}</span> });
+    if (typeof arguments_.file_path === "string") {
+      fields.push({ label: "Path", value: <span className="font-mono">{arguments_.file_path}</span> });
     }
     if (typeof arguments_.filename === "string") {
       fields.push({ label: "Filename", value: <span className="font-mono">{arguments_.filename}</span> });
+    }
+    if (typeof arguments_.limit === "number" || typeof arguments_.limit === "string") {
+      fields.push({ label: "Limit", value: String(arguments_.limit) });
     }
   }
 
@@ -623,11 +624,6 @@ function CopyButton({ value, label = "Copy" }: { value: string; label?: string }
 function ToolCallsDisplay({ toolCalls, isFullPage = false }: { toolCalls: ToolInvocation[]; isFullPage?: boolean }) {
   const [expanded, setExpanded] = useState(false);
   const [debugMode, setDebugMode] = useToolDebugMode();
-  
-  // Check if any tool call is a Browser Use task
-  const browserUseCalls = toolCalls.filter(
-    (tc) => tc.name === "browser_use_task" && tc.arguments?.task
-  );
 
   if (isFullPage) {
     return (
@@ -1093,6 +1089,8 @@ export function ChatbotPanel({
 
   const { isMd, isLg } = useBreakpoints();
   const SIDEBAR_STORAGE_KEY = "chatbot-sidebars";
+  const LAST_SESSION_STORAGE_KEY = "chatbot-last-session-id";
+  const didRestoreLastSessionRef = useRef(false);
 
   const getFileKey = (file: { id?: string; path?: string; filename?: string }, indexFallback?: number): string => {
     return file.id || file.path || file.filename || (indexFallback != null ? String(indexFallback) : "");
@@ -1315,6 +1313,7 @@ export function ChatbotPanel({
   
   const fileInputRef = useRef<HTMLInputElement>(null);
   const messagesEndRef = useRef<HTMLDivElement>(null);
+  const sessionListRef = useRef<HTMLDivElement>(null);
   // Typewriter effect refs
   const typewriterBufferRef = useRef<Map<string, string>>(new Map()); // messageId -> buffered content
   const typewriterDisplayRef = useRef<Map<string, string>>(new Map()); // messageId -> displayed content
@@ -1335,6 +1334,18 @@ export function ChatbotPanel({
   useEffect(() => {
     messagesEndRef.current?.scrollIntoView({ behavior: "smooth" });
   }, [messages.length]);
+
+  // Keep the active session item visible in the left sidebar.
+  useEffect(() => {
+    if (!isMd || !leftSidebarOpen) return;
+    if (!sessionId) return;
+    const listEl = sessionListRef.current;
+    if (!listEl) return;
+    const item = listEl.querySelector(`[data-session-id="${sessionId}"]`);
+    if (item instanceof HTMLElement) {
+      item.scrollIntoView({ block: "center", inline: "nearest" });
+    }
+  }, [sessionId, leftSidebarOpen, isMd, sessions.length]);
 
   // Handle keyboard navigation for image lightbox
   useEffect(() => {
@@ -1527,6 +1538,24 @@ export function ChatbotPanel({
     fetchSessions();
   }, [fullPage]);
 
+  // Restore last selected session (full-page only) when URL session is not provided.
+  useEffect(() => {
+    if (!fullPage) return;
+    if (initialSessionId) return;
+    if (didRestoreLastSessionRef.current) return;
+    didRestoreLastSessionRef.current = true;
+
+    try {
+      const lastId = localStorage.getItem(LAST_SESSION_STORAGE_KEY);
+      if (lastId && typeof lastId === "string") {
+        handleLoadSessionMessages(lastId);
+      }
+    } catch {
+      /* ignore */
+    }
+    // eslint-disable-next-line react-hooks/exhaustive-deps -- restore once on mount when URL does not provide session
+  }, [fullPage, initialSessionId]);
+
   // Load initial session from URL (e.g. /protected/[id]) when provided
   useEffect(() => {
     if (!fullPage || !initialSessionId) return;
@@ -1571,6 +1600,17 @@ export function ChatbotPanel({
       setIsLoading(true);
       const res = await fetch(`/api/chat-sessions/${targetSessionId}/messages`);
       if (!res.ok) {
+        // If we tried to restore a session that no longer exists or is not accessible, clear the persisted key.
+        if ([401, 403, 404].includes(res.status)) {
+          try {
+            const lastId = localStorage.getItem(LAST_SESSION_STORAGE_KEY);
+            if (lastId === targetSessionId) {
+              localStorage.removeItem(LAST_SESSION_STORAGE_KEY);
+            }
+          } catch {
+            /* ignore */
+          }
+        }
         const errorData = await res.json().catch(() => ({}));
         throw new Error(errorData.message || "Failed to load messages");
       }
@@ -1578,6 +1618,13 @@ export function ChatbotPanel({
       setMessages(data.messages ?? []);
       setTokenCounts(data.tokenCounts ?? null);
       setSessionId(targetSessionId);
+
+      // Persist last selected session for restore-on-reenter UX.
+      try {
+        localStorage.setItem(LAST_SESSION_STORAGE_KEY, targetSessionId);
+      } catch {
+        /* ignore */
+      }
       
       // Set locked character ID for this session
       if (data.characterId) {
@@ -1688,6 +1735,16 @@ export function ChatbotPanel({
       if (!res.ok) {
         const errorData = await res.json().catch(() => ({}));
         throw new Error(errorData.message || "Failed to delete session");
+      }
+
+      // If we deleted the persisted last session, clear it.
+      try {
+        const lastId = localStorage.getItem(LAST_SESSION_STORAGE_KEY);
+        if (lastId === targetSessionId) {
+          localStorage.removeItem(LAST_SESSION_STORAGE_KEY);
+        }
+      } catch {
+        /* ignore */
       }
 
       // Remove from local list
@@ -3032,7 +3089,10 @@ export function ChatbotPanel({
                 <PanelLeftClose className="h-4 w-4" />
               </button>
             </div>
-            <div className="scrollbar-hide flex-1 space-y-4 overflow-y-auto pr-1">
+            <div
+              ref={sessionListRef}
+              className="scrollbar-hide flex-1 space-y-4 overflow-y-auto pr-1"
+            >
           <Button
             className="w-full justify-start gap-2" 
             variant="outline"
@@ -3070,6 +3130,7 @@ export function ChatbotPanel({
                 return (
                   <div
                     key={s.id}
+                    data-session-id={s.id}
                     className={`group flex w-full items-start gap-3 rounded-lg border-l-2 px-3 py-2.5 text-sm transition-colors ${
                       isActive
                         ? "border-primary bg-accent"
@@ -3632,15 +3693,21 @@ export function ChatbotPanel({
           </div>
         </div>
 
-        {/* Files modal */}
-        {isFilesModalOpen && (
-          <div className="fixed inset-0 z-30 flex items-center justify-center bg-black/70 backdrop-blur-md">
-            <div className="relative max-h-[82vh] w-full max-w-4xl overflow-hidden rounded-2xl border bg-card shadow-lg">
+        {/* Files modal — rendered via Portal so overlay covers Slides sidebar */}
+        {isFilesModalOpen && createPortal(
+          <div className="fixed inset-0 z-[100] flex items-center justify-center bg-black/70 backdrop-blur-md" onClick={() => setIsFilesModalOpen(false)} role="presentation">
+            <div
+              className="relative max-h-[82vh] w-full max-w-4xl overflow-hidden rounded-2xl border bg-card shadow-lg"
+              onClick={(e) => e.stopPropagation()}
+              role="dialog"
+              aria-modal="true"
+              aria-labelledby="files-modal-title"
+            >
               <div className="flex flex-wrap items-center gap-3 border-b px-6 py-4 sm:justify-between">
                 <div className="space-y-1">
                   <div className="flex items-center gap-2">
                     <FolderOpen className="h-5 w-5 text-primary" />
-                    <span className="text-lg font-semibold">
+                    <span id="files-modal-title" className="text-lg font-semibold">
                       Acontext Disk Files
                     </span>
                   </div>
@@ -4035,18 +4102,25 @@ export function ChatbotPanel({
                 })}
               </div>
             </div>
-          </div>
+          </div>,
+          document.body
         )}
 
-        {/* Tools modal */}
-        {isToolsModalOpen && (
-          <div className="fixed inset-0 z-30 flex items-center justify-center bg-black/70 backdrop-blur-md">
-            <div className="relative max-h-[82vh] w-full max-w-4xl overflow-hidden rounded-2xl border bg-card shadow-lg">
+        {/* Tools modal — rendered via Portal so overlay covers Slides sidebar */}
+        {isToolsModalOpen && createPortal(
+          <div className="fixed inset-0 z-[100] flex items-center justify-center bg-black/70 backdrop-blur-md" onClick={() => setIsToolsModalOpen(false)} role="presentation">
+            <div
+              className="relative max-h-[82vh] w-full max-w-4xl overflow-hidden rounded-2xl border bg-card shadow-lg"
+              onClick={(e) => e.stopPropagation()}
+              role="dialog"
+              aria-modal="true"
+              aria-labelledby="tools-modal-title"
+            >
               <div className="flex flex-wrap items-center gap-3 border-b px-6 py-4 sm:justify-between">
                 <div className="space-y-1">
                   <div className="flex items-center gap-2">
                     <Wrench className="h-5 w-5 text-primary" />
-                    <span className="text-lg font-semibold">
+                    <span id="tools-modal-title" className="text-lg font-semibold">
                       Available Tools
                     </span>
                   </div>
@@ -4141,7 +4215,8 @@ export function ChatbotPanel({
                 ))}
               </div>
             </div>
-          </div>
+          </div>,
+          document.body
         )}
       </section>
 
@@ -4169,7 +4244,7 @@ export function ChatbotPanel({
         <aside className="relative flex h-full w-64 flex-shrink-0 flex-col border-l bg-card px-4 py-3">
           <div className="flex flex-col flex-1 min-h-0">
             <div className="flex items-center justify-between gap-2 pb-2">
-              <span className="text-xs font-medium text-muted-foreground">Slides</span>
+              <span className="text-sm font-semibold text-foreground">Slides</span>
               <button
                 type="button"
                 onClick={() => setRightSidebarOpen(false)}
@@ -4180,12 +4255,8 @@ export function ChatbotPanel({
               </button>
             </div>
             <div className="scrollbar-subtle flex-1 space-y-4 overflow-y-auto pr-1">
-          <div className="sticky top-0 bg-card pb-2 z-10">
-            <div className="flex items-center gap-2 mb-1">
-              <FolderOpen className="h-4 w-4 text-primary" />
-              <span className="text-sm font-semibold">Slides</span>
-            </div>
-            <div className="text-xs text-muted-foreground mb-2">
+          <div className="sticky top-0 bg-card pb-2 z-10 space-y-3">
+            <div className="text-xs text-muted-foreground">
               {files.filter(f => {
                 const { isImage } = detectFileType(f.filename, f.mimeType);
                 return isImage;
@@ -4194,7 +4265,7 @@ export function ChatbotPanel({
                 return isImage;
               }).length !== 1 ? 's' : ''}
             </div>
-            {/* Select all and Generate PPT buttons */}
+            {/* Select all and Download PPT buttons */}
             {files.filter(f => {
               const { isImage } = detectFileType(f.filename, f.mimeType);
               return isImage;
@@ -4226,6 +4297,7 @@ export function ChatbotPanel({
                   onClick={handleBatchDownload}
                   disabled={isBatchDownloading || selectedFiles.length === 0}
                   size="sm"
+                  variant="outline"
                   className="w-full text-xs"
                 >
                   {isBatchDownloading ? (
@@ -4235,8 +4307,8 @@ export function ChatbotPanel({
                     </>
                   ) : (
                     <>
-                      <Sparkles className="mr-1 h-3 w-3" />
-                      download ({selectedFiles.length}) ppt
+                      <Download className="mr-1 h-3 w-3" />
+                      Download ({selectedFiles.length}) PPT
                     </>
                   )}
                 </Button>
@@ -4565,8 +4637,8 @@ export function ChatbotPanel({
                     />
                     <label htmlFor="select-all-images-drawer" className="text-xs font-medium cursor-pointer">Select all</label>
                   </div>
-                  <Button onClick={handleBatchDownload} disabled={isBatchDownloading || selectedFiles.length === 0} size="sm" className="w-full text-xs">
-                    {isBatchDownloading ? <><Loader2 className="mr-1 h-3 w-3 animate-spin" />Generating...</> : <><Sparkles className="mr-1 h-3 w-3" />download ({selectedFiles.length}) ppt</>}
+                  <Button onClick={handleBatchDownload} disabled={isBatchDownloading || selectedFiles.length === 0} size="sm" variant="outline" className="w-full text-xs">
+                    {isBatchDownloading ? <><Loader2 className="mr-1 h-3 w-3 animate-spin" />Generating...</> : <><Download className="mr-1 h-3 w-3" />Download ({selectedFiles.length}) PPT</>}
                   </Button>
                 </div>
               )}

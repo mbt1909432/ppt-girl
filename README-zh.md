@@ -106,8 +106,6 @@ IMAGE_GEN_API_KEY=your-image-gen-api-key
 IMAGE_GEN_BASE_URL=https://api.openai-next.com
 IMAGE_GEN_DEFAULT_MODEL=gemini-3-pro-image-preview
 
-# Browser Use Cloud (可选)
-BROWSER_USE_API_KEY=your-browser-use-cloud-api-key
 ```
 
 5. **设置数据库架构**
@@ -139,9 +137,9 @@ npm run dev
 
 ## 🔧 可用工具
 
-- **Browser Use Task** (`browser_use_task`) - 网页自动化
 - **Acontext Disk 工具** - 文件系统操作（`write_file`, `read_file`, `list_artifacts` 等）
 - **Todo 管理** (`todo`) - 在聊天会话中创建和管理待办事项
+- **图像生成** (`image_gen`) - 生成幻灯片图片
 
 ## 📚 文档
 

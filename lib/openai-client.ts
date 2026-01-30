@@ -4,7 +4,6 @@
 
 import OpenAI from "openai";
 import type { ChatMessage, LLMConfig, ToolInvocation } from "@/types/chat";
-import { runBrowserUseTask, streamBrowserUseTask } from "@/lib/browser-use";
 import {
   executeAcontextDiskTool,
   isAcontextDiskToolName,
@@ -127,17 +126,7 @@ async function executeToolCall(
 
   const { name, arguments: argsJson } = toolCall.function;
 
-  if (name === "browser_use_task") {
-    const args = JSON.parse(argsJson || "{}");
-    console.log("[openai-client] executeToolCall: calling runBrowserUseTask with task:", args.task);
-    const result = await runBrowserUseTask({
-      task: typeof args.task === "string" ? args.task : "",
-    });
-    console.log("[openai-client] executeToolCall: runBrowserUseTask returned:", JSON.stringify(result, null, 2).substring(0, 500));
-    return result;
-  }
-
-  // Experience search tool has been removed
+  // Experience search tool has been removed; browser_use_task has been removed
 
   if (isTodoToolName(name)) {
     if (!sessionId) {
@@ -161,62 +150,6 @@ async function executeToolCall(
   }
 
   throw new Error(`Unknown tool: ${name}`);
-}
-
-/**
- * Streams a Browser Use task call, yielding step updates
- */
-export async function* streamBrowserUseToolCall(
-  toolCall: OpenAI.Chat.Completions.ChatCompletionMessageToolCall
-): AsyncGenerator<
-  { type: "step" | "complete"; taskId?: string; step?: unknown; result?: unknown },
-  unknown,
-  unknown
-> {
-  if (toolCall.type !== "function" || !toolCall.function) {
-    throw new Error(`Unsupported tool call type: ${toolCall.type}`);
-  }
-
-  const { name, arguments: argsJson } = toolCall.function;
-
-  if (name !== "browser_use_task") {
-    throw new Error(`streamBrowserUseToolCall only supports browser_use_task`);
-  }
-
-  const args = JSON.parse(argsJson || "{}");
-  const task = typeof args.task === "string" ? args.task : "";
-
-  // Stream Browser Use task updates
-  console.log("[openai-client] streamBrowserUseToolCall: starting stream for task:", task);
-  for await (const update of streamBrowserUseTask({ task })) {
-    console.log("[openai-client] streamBrowserUseToolCall: received update type:", (update as { type?: string })?.type);
-    if (update && typeof update === "object" && "type" in update) {
-      if (update.type === "step") {
-        yield {
-          type: "step",
-          taskId: (update as { taskId?: string }).taskId,
-          step: (update as { step?: unknown }).step,
-        };
-      } else if (update.type === "complete") {
-        const completeUpdate = update as {
-          taskId?: string;
-          output?: unknown;
-          raw?: unknown;
-        };
-        console.log("[openai-client] streamBrowserUseToolCall: complete update output:", JSON.stringify(completeUpdate.output, null, 2).substring(0, 500));
-        const finalResult = completeUpdate.output ?? completeUpdate.raw ?? update;
-        console.log("[openai-client] streamBrowserUseToolCall: returning final result:", JSON.stringify(finalResult, null, 2).substring(0, 500));
-        // Use yield (not return) so callers using `for await` can receive the final result.
-        yield {
-          type: "complete",
-          taskId: completeUpdate.taskId,
-          result: finalResult,
-        };
-        return;
-      }
-    }
-  }
-
 }
 
 /**
@@ -592,85 +525,8 @@ export async function* chatCompletionStream(
 
         const { name, arguments: argsJson } = toolCall.function;
 
-        // Check if this is a Browser Use task that should be streamed
-        if (name === "browser_use_task") {
-          const toolCallInvocation: ToolInvocation = {
-            id: toolCall.id,
-            name,
-            arguments: JSON.parse(argsJson || "{}"),
-            invokedAt: new Date(),
-          };
-
-          // Emit tool call start
-          yield { type: "tool_call_start", toolCall: toolCallInvocation };
-
-          let finalResult: unknown = null;
-          let taskId: string | undefined = undefined;
-
-          try {
-            console.log("[openai-client] chatCompletionStream: starting browser_use_task stream");
-            // Stream Browser Use task execution
-            for await (const update of streamBrowserUseToolCall(toolCall)) {
-              console.log("[openai-client] chatCompletionStream: received update type:", update.type);
-              if (update.type === "step") {
-                // Emit step update
-                yield {
-                  type: "tool_call_step",
-                  toolCallId: toolCall.id,
-                  step: update.step,
-                };
-                if (update.taskId) {
-                  taskId = update.taskId;
-                }
-              } else if (update.type === "complete") {
-                finalResult = update.result;
-                console.log("[openai-client] chatCompletionStream: complete update, finalResult:", JSON.stringify(finalResult, null, 2).substring(0, 500));
-                if (update.taskId) {
-                  taskId = update.taskId;
-                }
-              }
-            }
-
-            console.log("[openai-client] chatCompletionStream: stream finished, finalResult:", JSON.stringify(finalResult, null, 2).substring(0, 500));
-
-            // Update tool call with result
-            toolCallInvocation.result = finalResult;
-            if (taskId && finalResult && typeof finalResult === "object") {
-              (finalResult as { taskId?: string }).taskId = taskId;
-            }
-            allToolCalls.push(toolCallInvocation);
-
-            console.log("[openai-client] chatCompletionStream: toolCallInvocation.result:", JSON.stringify(toolCallInvocation.result, null, 2).substring(0, 500));
-
-            // Emit tool call complete
-            yield { type: "tool_call_complete", toolCall: toolCallInvocation };
-
-            toolResults.push({
-              id: toolCall.id,
-              type: "function",
-              function: {
-                name,
-                arguments: argsJson,
-              },
-            });
-          } catch (error) {
-            toolCallInvocation.error =
-              error instanceof Error ? error.message : String(error);
-            allToolCalls.push(toolCallInvocation);
-            yield { type: "tool_call_error", toolCall: toolCallInvocation };
-            // Add to toolResults so we generate a tool message (required by OpenAI)
-            toolResults.push({
-              id: toolCall.id,
-              type: "function",
-              function: {
-                name,
-                arguments: argsJson,
-              },
-            });
-          }
-        } else {
-          // Non-streaming tool call
-          const toolCallInvocation: ToolInvocation = {
+        // Tool call (browser_use_task streaming removed)
+        const toolCallInvocation: ToolInvocation = {
             id: toolCall.id,
             name,
             arguments: JSON.parse(argsJson || "{}"),
@@ -700,7 +556,6 @@ export async function* chatCompletionStream(
               arguments: argsJson,
             },
           });
-        }
       } catch (error) {
         const errorToolCall: ToolInvocation = {
           id: toolCall.id,

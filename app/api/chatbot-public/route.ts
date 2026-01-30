@@ -5,7 +5,7 @@
  * - Uses per-browser guest identity (guestId from request, or fallback)
  * - Persists context in Acontext (session + disk) using derived guest IDs
  * - Tools: todo, Acontext disk tools
- * - IMPORTANT: browser_use_task is NOT exposed in this route
+ * - Tools: same set as /api/chatbot (todo, image_gen, Acontext disk tools)
  */
 
 import { NextRequest, NextResponse } from "next/server";
@@ -55,7 +55,7 @@ function getDefaultSystemPrompt(): string {
 This is a PUBLIC DEMO session. The user may not be logged in.
 
 Constraints:
-- You DO NOT have access to browser automation tools in this mode.
+- You have access to todo, image generation, and Acontext disk tools in this mode.
 - You CAN use Acontext tools like todo and disk tools as needed.
 - Treat this as a temporary workspace scoped to this browser only.
 
@@ -384,7 +384,7 @@ export async function POST(request: NextRequest) {
     // Create OpenAI client
     const client = createOpenAIClient(llmConfig);
 
-    // Tools: same as /api/chatbot but WITHOUT browser_use_task
+    // Tools: same as /api/chatbot (todo, image_gen, Acontext disk tools)
     const toolsEnabled = process.env.CHATBOT_ENABLE_TOOLS !== "false";
     const availableTools = toolsEnabled
       ? [
